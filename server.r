@@ -63,7 +63,7 @@
       }
     })
     recAxe3r = reactive({
-      if(is.null(input$thirdAxeOutput)|| input$thirdAxeAxeOutput==' '){
+      if(is.null(input$thirdAxeOutput)|| input$thirdAxeOutput==' '){
         return()
       }else{
         return(paste(input$thirdAxeOutput, collapse = "','"))
