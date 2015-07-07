@@ -1,65 +1,35 @@
-if (!require("shiny") && !require("sqldf") && !require("car")) {
-  install.packages(c("shiny", "sqldf", "car"), dependencies = TRUE)
+rm(list = ls())
+if (!require("shiny") && !require("sqldf")) {
+  install.packages(c("shiny", "sqldf"), dependencies = TRUE)
 }
 
 library(shiny)
 library(sqldf)
-library(car)
 
-data(Moore)
-ContextElements = colnames(Moore)
-ContextElements[1] = 'partner_status'
-colnames(Moore) = ContextElements
-library(shiny)
- ui = shinyUI(fluidPage(
-    
-    titlePanel(h3("Data Select", style="background-color:gray")),
-    hr(),
-    div(class="row-fluid", style="height=350px; background-color:lightgray",
-        column(width=3,
-               uiOutput("firstAxe"),
-               uiOutput("firstAxeOutput")
-        ),
-        column(width=3,
-               uiOutput("secondAxe"),
-               uiOutput('type1'),
-               uiOutput('type1v'),
-               uiOutput("secondAxeOutput")
-        ),
-        column(width=3,
-               uiOutput("thirdAxe"),
-               uiOutput('type2'),
-               uiOutput("thirdAxeOutput")
-        ),
-        column(width=3,
-               uiOutput("fourthAxe"),
-               uiOutput('type3'),
-               uiOutput("fourthAxeOutput")
-        )
+reponse =c(rep("yes",5), rep("no", 5), rep("yes", 5), rep("na", 3), rep("yes", 2))
+ville =c(rep("Paris",10), rep("Londre", 5), rep("Rome", 5))
+score = c(rep(5,7), rep(7, 3), rep(10, 5), rep(20, 5))
+data = data.frame(ville, reponse, score)
+
+Choices = colnames(data)
+
+  ui = shinyUI(fluidPage(
+    title = 'test Menu',
+    div(
+      class = "row-fluid", style = "height=350px; background-color:lightgray",
+      column(width = 3,
+             uiOutput("firstCol"),
+             uiOutput("firstColOutput")),
+      column(width = 3,
+             uiOutput("secondCol"),
+             uiOutput("secondColOutput")),
+      column(width = 3,
+             uiOutput("thirdCol"),
+             uiOutput("thirdColOutput"))
     ),
-    hr(),
-    hr(),
     div(class="row-fluid",
-        column(12,
-               verbatimTextOutput("mainQuery"))),
-    hr(),
-    div(class="row-fluid",
-        column(12,
-               verbatimTextOutput("query1"))),
-    div(class="row-fluid",
-        column(12,
-               verbatimTextOutput("query2"))),
-    div(class="row-fluid",
-        column(12,
-               verbatimTextOutput("query3"))),
-    div(class="row-fluid",
-        column(6,h4("Selected Lines"),
-               verbatimTextOutput("lines")),
-        column(6,h4("conformity"),
-               verbatimTextOutput("conformity"))),
-    div(class="row-fluid",
-        column(12,
-               dataTableOutput("moore")))
-    
-  )
-)
+        column(width=12,
+               tableOutput("da")
+               )
+        )
+  ))
