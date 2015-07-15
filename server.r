@@ -1,97 +1,58 @@
- server = function(input, output, session){
-    
+library(magrittr)
+
+# Returns true if x has a non-empty value.
+has <- function(x) {
+  !is.null(x) && length(x) > 0 && !identical(x, "")
+}
+
+# Given data frame x, the name of a column, and zero or more values,
+# filter x to only include rows where the given column value is
+# in the set of given values. If either the col or values args
+# are null, zero-length, or "", then return the entire data frame.
+filterData <- function(x, col, values) {
+  if (has(col) && has(values)) {
+    x[x[,col] %in% values,]
+  } else {
+    x
+  }
+}
+
+# Given data frame x and a column name, return a sorted list of
+# unique values. Converts factor values to character.
+getChoices <- function(x, col) {
+    choices <- if (has(col)) {
+        sort(unique(x[,col]))
+    } else {
+        NULL
+    }
+
+    if (is.factor(choices)) {
+        choices <- as.character(choices)
+    }
+
+    choices
+}
+
+server = function(input, output, session){
+ 
     donnees = reactive({
-      if(is.null(input$firstColOutput) || input$firstColOutput==""){
-        df = data
-      }else if(is.null(input$secondCol) && !is.null(input$firstColOutput) ){
-        query = paste("select * from data where ", input$firstCol , " in ", input$firstColOutput, sep=" ")
-        df = sqldf(query)
-      }else{
-        df= data
-      }
-      return (df)
+        data %>%
+            filterData(input$firstCol, input$firstColValue) %>%
+            filterData(input$secondCol, input$secondColValue) %>%
+            filterData(input$thirdCol, input$thirdColValue)
     })
     output$da <- renderTable(donnees())
-    
-    output$firstCol = renderUI({
-      selectInput(
-        inputId = "firstCol", label = h4("First Axis"),
-        choices = c(Choose = '',Choices), multiple = FALSE
-      )
-    })
-    
-    output$secondCol = renderUI({
-      sel1 = input$firstCol
-      if(is.null(sel1) || sel1==""){
-        Choices = NULL
-      }else{
-        Choices = setdiff(Choices, sel1)  
-      }
-      selectInput(
-        inputId = "secondCol", label = h4("Second Axis"),
-        choices = c(Choose = '',Choices), multiple = FALSE
-      )
-    })
-    
-    output$thirdCol = renderUI({
-      sel1 = input$firstCol
-      sel2 = input$secondCol
-      sel = c(sel1, sel2)
-      if(is.null(sel2) || sel2==""){
-        Choices = NULL
-      }else{
-        Choices = setdiff(Choices, sel)  
-      }
-      selectInput(
-        inputId = "thirdCol", label = h4("Third Axis"),
-        choices = c(Choose = '',Choices), multiple = FALSE
-      )
-    })
-    # output first axe
-    output$firstColOutput = renderUI({
-      if(is.null(input$firstCol) || input$firstCol==""){
-        selectInput(
-          inputId = "firstColOutput", label = "", choices = NULL, multiple = TRUE, selectize = FALSE
-        )
-      }else{
-        test = donnees()  
-        query = paste("select distinct " , input$firstCol , " from test ", sep="")
-        choicesValues = sqldf(query)
-        selectInput(
-          inputId = "firstColOutput", label = "", choices = as.character(choicesValues[[1]]), multiple = TRUE, selectize = FALSE
-        )
-      }
-    })
-    
-    # output second axe
-    output$secondColOutput = renderUI({
-      if(is.null(input$secondCol) || input$secondCol==""){
-        selectInput(
-          inputId = "secondColOutput", label = "", choices = NULL, multiple = TRUE, selectize = FALSE
-        )
-      }else{
-        test = donnees()  
-        query = paste("select distinct " , input$secondCol , " from test ", sep="")
-        choicesValues = sqldf(query)
-        selectInput(
-          inputId = "secondColOutput", label = "", choices = as.character(choicesValues[[1]]), multiple = TRUE, selectize = FALSE
-        )
-      }
-    })
-    
-    # output third axe
-    output$thirdColOutput = renderUI({
-      if(is.null(input$thirdCol) || input$thirdCol==""){
-        selectInput(
-          inputId = "thirdColOutput", label = "", choices = NULL, multiple = TRUE, selectize = FALSE
-        )
-      }else{
-        test = donnees()  
-        query = paste("select distinct " , input$thirdCol , " from test ", sep="")
-        choicesValues = sqldf(query)
-        selectInput(
-          inputId = "thirdColOutput", label = "", choices = as.character(choicesValues[[1]]), multiple = TRUE, selectize = FALSE
-        )
-      }
-    })
-  }
+
+    # It's OK to set up observers using lapply. (DON'T use `for`
+    # or `while` loops to set up observers or reactives, there
+    # are scoping issues that are really tricky to spot.)
+    lapply(c("first", "second", "third"), function(num) {
+        observe({
+            updateSelectInput(session, paste0(num, "Col"), choices = Choices)
+        })
+        observe({
+            updateSelectInput(session, paste0(num, "ColValue"),
+                choices = getChoices(data, input[[paste0(num, "Col")]]))
+        })
+    })    
+}
